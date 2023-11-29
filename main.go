@@ -1,10 +1,10 @@
 package main
 
-import(
+import (
 	"aci-adr-go-base/service/dal"
 	"os"
 )
 
-func main(){
+func main() {
 	dal.InitMongo(os.Getenv("MONGODB_URI"))
 }

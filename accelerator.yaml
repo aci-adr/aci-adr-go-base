@@ -1,0 +1,10 @@
+accelerator:
+  displayName: Go Accelerator
+  description: Contains structure and necessary reusable components for Go Application framework
+  iconUrl: https://blogs.vmware.com/wp-content/uploads/2022/02/tap.png
+  tags:
+    - GO
+# Place this after the `options` section from the previous step
+engine:
+  merge:
+    - include: ["**"]
