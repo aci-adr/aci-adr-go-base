@@ -1,6 +1,6 @@
 module aci-adr-go-base
 
-go 1.21.3
+go 1.20
 
 require go.opentelemetry.io/otel/sdk/metric v1.21.0
 
