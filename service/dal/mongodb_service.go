@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,21 +12,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-const (
-	dbName         = "fx_data"
-	collectionName = "forex_data"
-)
-
 type MongoDbService[T any] struct {
+	Collection string
 }
 
 var database *mongo.Database
 
-func InitMongo(connectionURI string) {
+func InitMongo() {
 	loggerOptions := options.
 		Logger().
 		SetComponentLevel(options.LogComponentServerSelection, options.LogLevelDebug)
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connectionURI).SetLoggerOptions(loggerOptions))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(os.Getenv("MONGODB_URI")).SetLoggerOptions(loggerOptions))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +32,7 @@ func InitMongo(connectionURI string) {
 		log.Fatal(err)
 	}
 
-	database = client.Database(dbName)
+	database = client.Database(os.Getenv("DB_NAME"))
 }
 
 func getDatabase() *mongo.Database {
@@ -47,7 +44,7 @@ func getContext() context.Context {
 }
 
 func (db *MongoDbService[T]) GetOne(filter bson.D) (T, error) {
-	result := getDatabase().Collection(collectionName).FindOne(getContext(), filter)
+	result := getDatabase().Collection(db.Collection).FindOne(getContext(), filter)
 	var data T
 	err := result.Decode(&data)
 	if err != nil {
@@ -57,7 +54,7 @@ func (db *MongoDbService[T]) GetOne(filter bson.D) (T, error) {
 }
 
 func (db *MongoDbService[T]) Get(filter bson.D) ([]T, error) {
-	cursor, _ := getDatabase().Collection(collectionName).Find(getContext(), filter)
+	cursor, _ := getDatabase().Collection(db.Collection).Find(getContext(), filter)
 	defer func(cursor *mongo.Cursor, ctx context.Context) {
 		err := cursor.Close(ctx)
 		if err != nil {
@@ -76,7 +73,7 @@ func (db *MongoDbService[T]) Get(filter bson.D) ([]T, error) {
 }
 
 func (db *MongoDbService[T]) CreateOne(document T) (T, error) {
-	_, err := getDatabase().Collection(collectionName).InsertOne(getContext(), document)
+	_, err := getDatabase().Collection(db.Collection).InsertOne(getContext(), document)
 
 	if err != nil {
 		return document, err
@@ -87,7 +84,7 @@ func (db *MongoDbService[T]) CreateOne(document T) (T, error) {
 func (db *MongoDbService[T]) UpdateOne(document bson.D, filter bson.D) (T, error) {
 	option := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
-	result := getDatabase().Collection(collectionName).FindOneAndUpdate(getContext(), filter, document, option)
+	result := getDatabase().Collection(db.Collection).FindOneAndUpdate(getContext(), filter, document, option)
 
 	var data T
 	err := result.Decode(&data)
@@ -98,7 +95,7 @@ func (db *MongoDbService[T]) UpdateOne(document bson.D, filter bson.D) (T, error
 }
 
 func (db *MongoDbService[T]) DeleteOne(filter bson.D) (int64, error) {
-	result, err := getDatabase().Collection(collectionName).DeleteOne(getContext(), filter)
+	result, err := getDatabase().Collection(db.Collection).DeleteOne(getContext(), filter)
 
 	if err != nil {
 		return 0, err
