@@ -28,3 +28,8 @@ spec:
       value: "{{LISTEN_SUBJECT}}"
     - name: PUBLISH_SUBJECT
       value: "{{PUBLISH_SUBJECT}}"
+  source:
+    git:
+      url: REPOSITORY-URL
+      ref:
+        branch: main
