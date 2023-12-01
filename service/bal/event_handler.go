@@ -17,7 +17,9 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-func Connect(meter metric.Meter, db dal.Database[entity.ForexData], js jetstream.JetStream) {
+func Connect(meter metric.Meter, js jetstream.JetStream) {
+	//create DB services as needed.
+	var db dal.Database[entity.ForexData] = &dal.MongoDbService[entity.ForexData]{Collection: "forex_data"}
 	histogram, _ := meter.Float64Histogram(
 		os.Getenv("STAGE_NAME")+"_duration",
 		metric.WithDescription("The duration of task execution."),
@@ -72,11 +74,11 @@ func handle(msg jetstream.Msg, js jetstream.JetStream, db dal.Database[entity.Fo
 		return
 	}
 	result, _ := db.GetOne(bson.D{
-		{"tenantId", message.TenantId},
-		{"bankId", message.BankId},
-		{"baseCurrency", message.BaseCurrency},
-		{"targetCurrency", message.TargetCurrency},
-		{"tier", message.Tier},
+		{Key: "tenantId", Value: message.TenantId},
+		{Key: "bankId", Value: message.BankId},
+		{Key: "baseCurrency", Value: message.BaseCurrency},
+		{Key: "targetCurrency", Value: message.TargetCurrency},
+		{Key: "tier", Value: message.Tier},
 	})
 	if result.BuyRate < 0 {
 		log.Println("No BuyRate found")

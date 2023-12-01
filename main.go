@@ -1,7 +1,6 @@
 package main
 
 import (
-	"aci-adr-go-base/model/entity"
 	"aci-adr-go-base/service/bal"
 	"aci-adr-go-base/service/dal"
 	"fmt"
@@ -19,8 +18,6 @@ import (
 func main() {
 	dal.InitMongo()
 	js := InitNats()
-	//create DB service. change entity if needed
-	var db dal.Database[entity.ForexData] = &dal.MongoDbService[entity.ForexData]{Collection: "forex_data"}
 	exporter, err := prometheus.New()
 	if err != nil {
 		log.Fatal(err)
@@ -28,7 +25,7 @@ func main() {
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	meter := provider.Meter(os.Getenv("STAGE_NAME"))
 	go serveMetrics()
-	bal.Connect(meter, db, js)
+	bal.Connect(meter, js)
 }
 
 func InitNats() jetstream.JetStream {

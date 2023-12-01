@@ -1,10 +1,63 @@
 accelerator:
-  displayName: Go Accelerator
+  displayName: Go nats Jetstream listener
   description: Contains structure and necessary reusable components for Go Application framework
   iconUrl: https://blogs.vmware.com/wp-content/uploads/2022/02/tap.png
   tags:
     - GO
+  options:
+    - name: dbName
+      label: Database Name
+      inputType: text
+      defaultValue: forex_data
+      required: true
+    - name: stageName
+      label: Application Name
+      inputType: text
+      defaultValue: payment-entry
+      required: true
+    - name: natsUri
+      label: Nats URI
+      inputType: text
+      defaultValue: nats://10.0.217.253:4222
+      required: true
+    - name: streamName
+      label: Jetstream Name
+      inputType: text
+      defaultValue: PAYMENT_ENTRY
+      required: true
+    - name: consumerName
+      label: Consumer Name
+      inputType: text
+      defaultValue: PMT_CONSUMER
+      required: true
+    - name: listenSubject
+      label: Listen to subject
+      inputType: text
+      defaultValue: PMT.ENTRY
+      required: true
+    - name: publishSubject
+      label: Publish to subject
+      inputType: text
+      defaultValue: PMT.END
+      required: true
 # Place this after the `options` section from the previous step
 engine:
   merge:
-    - include: ["**"]
+    - include: ["**/workload.yaml"]
+      chain:
+        - type: ReplaceText
+          substitutions:
+            - text: "{{DB_NAME}}"
+              with: "#dbName"
+            - text: "{{STAGE_NAME}}"
+              with: "#stageName"
+            - text: "{{NATS_URI}}"
+              with: "#natsUri"
+            - text: "{{STREAM}}"
+              with: "#streamName"
+            - text: "{{CONSUMER}}"
+              with: "#consumerName"
+            - text: "{{LISTEN_SUBJECT}}"
+              with: "#listenSubject"
+            - text: "{{PUBLISH_SUBJECT}}"
+              with: "#publishSubject"
