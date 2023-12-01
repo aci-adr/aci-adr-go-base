@@ -42,8 +42,8 @@ accelerator:
       required: true
 # Place this after the `options` section from the previous step
 engine:
-  include: ["**"]
   merge:
+    - include: ["**"]
     - include: ["**/workload.yaml"]
       chain:
         - type: ReplaceText

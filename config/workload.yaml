@@ -28,8 +28,3 @@ spec:
       value: "{{LISTEN_SUBJECT}}"
     - name: PUBLISH_SUBJECT
       value: "{{PUBLISH_SUBJECT}}"
-  source:
-    git:
-      url: https://github.com/aci-adr/aci-adr-payment
-      ref:
-        branch: main
