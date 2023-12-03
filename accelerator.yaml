@@ -8,7 +8,7 @@ accelerator:
     - name: dbName
       label: Database Name
       inputType: text
-      defaultValue: forex_data
+      defaultValue: fx_data
       required: true
     - name: stageName
       label: Application Name
