@@ -23,7 +23,7 @@ accelerator:
     - name: streamName
       label: Jetstream Name
       inputType: text
-      defaultValue: PAYMENT_ENTRY
+      defaultValue: PAYMENT_STREAM
       required: true
     - name: consumerName
       label: Consumer Name
