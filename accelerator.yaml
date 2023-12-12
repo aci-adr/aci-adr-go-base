@@ -1,7 +1,7 @@
 accelerator:
   displayName: Go nats Jetstream listener
   description: Contains structure and necessary reusable components for Go Application framework
-  iconUrl: https://blogs.vmware.com/wp-content/uploads/2022/02/tap.png
+  iconUrl: https://raw.githubusercontent.com/aci-adr/icon-packs/main/aci_worldwide_logo.jpeg
   tags:
     - GO
   options:
