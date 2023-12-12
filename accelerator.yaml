@@ -1,9 +1,14 @@
 accelerator:
-  displayName: Go nats Jetstream listener
-  description: Contains structure and necessary reusable components for Go Application framework
+  displayName: ACI NATS message processor
+  description: Contains generic application structure and necessary reusable components for nats message processor in GO
   iconUrl: https://raw.githubusercontent.com/aci-adr/icon-packs/main/aci_worldwide_logo.jpeg
   tags:
     - GO
+    - open-telemetry
+    - NATS
+    - Jetstream
+    - Logging
+    - MongoDB
   options:
     - name: dbName
       label: Database Name
