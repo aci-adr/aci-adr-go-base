@@ -15,9 +15,11 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.opentelemetry.io/otel/metric"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func Connect(meter metric.Meter, js jetstream.JetStream) {
+func Connect(meter metric.Meter, tp *sdktrace.TracerProvider, js jetstream.JetStream) {
 	//create DB services as needed.
 	var db dal.Database[entity.ForexData] = &dal.MongoDbService[entity.ForexData]{Collection: "forex_data"}
 	histogram, _ := meter.Float64Histogram(
@@ -31,6 +33,8 @@ func Connect(meter metric.Meter, js jetstream.JetStream) {
 		metric.WithDescription("Number of API calls."),
 		metric.WithUnit("{call}"),
 	)
+
+	tracer := tp.Tracer(os.Getenv("STAGE_NAME"))
 
 	listenStream, listenStreamErr := js.Stream(context.Background(), os.Getenv("STREAM"))
 
@@ -47,8 +51,10 @@ func Connect(meter metric.Meter, js jetstream.JetStream) {
 
 	cc, err := cons.Consume(func(msg jetstream.Msg) {
 		go func() {
+			ctx, span := tracer.Start(context.Background(), "message_processing")
+			defer span.End()
 			start := time.Now()
-			handle(msg, js, db)
+			handle(msg, js, db, tracer, ctx)
 			duration := time.Since(start)
 			histogram.Record(context.Background(), duration.Seconds())
 			apiCounter.Add(context.Background(), 1)
@@ -66,13 +72,14 @@ func Connect(meter metric.Meter, js jetstream.JetStream) {
 	log.Println("Shutting down gracefully.")
 }
 
-func handle(msg jetstream.Msg, js jetstream.JetStream, db dal.Database[entity.ForexData]) {
+func handle(msg jetstream.Msg, js jetstream.JetStream, db dal.Database[entity.ForexData], tracer trace.Tracer, ctx context.Context) {
 	startedOn := time.Now().UnixMilli()
 	var message common.Message
 	unmarshalErr := json.Unmarshal(msg.Data(), &message)
 	if unmarshalErr != nil {
 		return
 	}
+	_, dbSpan := tracer.Start(ctx, "db_call")
 	result, _ := db.GetOne(bson.D{
 		{Key: "tenantId", Value: message.TenantId},
 		{Key: "bankId", Value: message.BankId},
@@ -80,6 +87,7 @@ func handle(msg jetstream.Msg, js jetstream.JetStream, db dal.Database[entity.Fo
 		{Key: "targetCurrency", Value: message.TargetCurrency},
 		{Key: "tier", Value: message.Tier},
 	})
+	dbSpan.End()
 	if result.BuyRate < 0 {
 		log.Println("No BuyRate found")
 	}
@@ -97,12 +105,15 @@ func handle(msg jetstream.Msg, js jetstream.JetStream, db dal.Database[entity.Fo
 	})
 
 	processedData, _ := json.Marshal(message)
+	_, natsPublishSpan := tracer.Start(ctx, "nats_publish")
 	_, err := js.PublishAsync(os.Getenv("PUBLISH_SUBJECT"), processedData)
+	natsPublishSpan.End()
 	if err != nil {
 		return
 	}
-
+	_, natsAck := tracer.Start(ctx, "nats_ack")
 	ackErr := msg.Ack()
+	natsAck.End()
 	if ackErr != nil {
 		return
 	}
